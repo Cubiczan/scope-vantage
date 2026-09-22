@@ -99,6 +99,7 @@
 - **AI-Powered Analysis**: Claude 3 Haiku generates narrative briefings via Bedrock Converse API
 - **Tariff Impact Modeling**: Scenario analysis for trade policy changes
 - **Concentration Risk**: Herfindahl-Hirschman Index (HHI) for geographic/supplier analysis
+- **Procurement Value Pools**: Deterministic supplier HHI, price/freight/policy risk scores, and risk-adjusted value pools (`docs/PROCUREMENT_RISK_ANALYTICS.md`)
 - **Athena Views**: Pre-built analytical views for trade, pricing, and risk dashboards
 
 ## Prerequisites
@@ -287,4 +288,3 @@ This repository is hardened with the [Consensus Hardening Protocol (CHP)](https:
 
 ### CHP Version
 cognitive-mesh-orchestrator 0.1.0 | [Protocol Docs](https://codeberg.org/cubiczan/consensus-hardening-protocol)
-
