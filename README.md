@@ -23,9 +23,8 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                    AWS LAMBDA (INGESTION)                        │
 │  ┌────────────────────────────────────────────────────────────┐ │
-│  │  ingestion_handler.py — EventBridge Scheduled Trigger      │ │
+│  │  comtrade_ingestion_handler.py — EventBridge schedule      │ │
 │  │  - Fetches Comtrade trade flows for critical minerals      │ │
-│  │  - Pulls commodity prices from AlphaVantage / FRED         │ │
 │  │  - Writes raw data to S3 as Iceberg tables                 │ │
 │  └────────────────────────────────────────────────────────────┘ │
 └─────────────────────────┬───────────────────────────────────────┘
@@ -69,11 +68,11 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                 AMAZON ATHENA (QUERY ENGINE)                     │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐  │
-│  │ trade_analysis   │  │ commodity        │  │ supply_chain │  │
-│  │ .sql             │  │ _pricing.sql     │  │ _risk.sql    │  │
-│  │ - Top corridors  │  │ - Price compare  │  │ - Risk dash  │  │
-│  │ - Volume trends  │  │ - Volatility     │  │ - HHI index  │  │
-│  │ - YoY changes    │  │ - Trend analysis │  │ - Bottlenecks│  │
+│  │ critical_mineral │  │ tariff_impact    │  │ supply_chain │  │
+│  │ _flows.sql       │  │ .sql             │  │ _risk.sql    │  │
+│  │ - Bilateral flow │  │ - Active tariffs │  │ - Risk dash  │  │
+│  │ - Unit values    │  │ - Impact quant.  │  │ - HHI index  │  │
+│  │ - Concentration  │  │ - Trade diversion│  │ - Bottlenecks│  │
 │  └──────────────────┘  └──────────────────┘  └──────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
                           │
@@ -100,7 +99,7 @@
 - **Tariff Impact Modeling**: Scenario analysis for trade policy changes
 - **Concentration Risk**: Herfindahl-Hirschman Index (HHI) for geographic/supplier analysis
 - **Procurement Value Pools**: Deterministic supplier HHI, price/freight/policy risk scores, and risk-adjusted value pools (`docs/PROCUREMENT_RISK_ANALYTICS.md`)
-- **Athena Views**: Pre-built analytical views for trade, pricing, and risk dashboards
+- **Athena Views**: Pre-built analytical views for critical-mineral trade flows, tariff impact, and supply-chain risk (`src/aws/athena_views/`)
 
 ## Prerequisites
 
@@ -120,8 +119,8 @@ pip install -r requirements.txt
 ### 2. Configure Environment
 
 ```bash
-cp .env.example .env
-# Edit .env with your AWS credentials and API keys
+# Create a .env with your AWS credentials and API keys
+# (e.g., FRED_API_KEY, an AlphaVantage key, and a Comtrade subscription key)
 ```
 
 ### 3. Deploy Infrastructure
@@ -133,19 +132,12 @@ terraform plan
 terraform apply
 ```
 
-### 4. Create Iceberg Tables
+The Terraform stack provisions the S3 data lake and Iceberg warehouse, Glue
+catalog tables, Athena workgroup, Lambda functions, EventBridge schedules, and
+the Step Functions pipeline that computes risk scores, analyzes tariff impacts,
+and generates AI briefings on schedule.
 
-```bash
-python notebooks/01_setup_iceberg_tables.py
-```
-
-### 5. Run the Full Pipeline
-
-```bash
-python notebooks/02_supply_chain_intelligence.py
-```
-
-### 6. Run Tests
+### 4. Run Tests
 
 ```bash
 python -m pytest tests/ -v
@@ -175,7 +167,7 @@ scope-vantage/
 │   │   ├── glue_scripts/       # ETL scripts (3)
 │   │   └── athena_views/       # SQL views (3)
 │   └── lambda/                 # Lambda handlers (2)
-├── notebooks/                  # Setup & pipeline notebooks
+├── notebooks/                  # package placeholder (no pipeline notebooks committed)
 ├── terraform/                  # Infrastructure as Code
 └── tests/                      # Test suite (50+ tests)
 ```
@@ -204,7 +196,6 @@ from src.services.pricing_service import PricingService
 
 svc = PricingService()
 prices = svc.get_commodity_price("LITHIUM")
-trends = svc.get_price_trend("COPPER", window_days=90)
 ```
 
 ### IntelligenceService — AI Analysis
@@ -255,6 +246,17 @@ Composite Score = (
 | Bedrock (Haiku) | 100K tokens/month              | ~$0.25      |
 | EventBridge     | 30 scheduled rules             | ~$0.30      |
 | **Total**       |                                | **~$9.50**  |
+
+## Evidence Matrix
+
+Every capability claim in this README and in `docs/` is bound to deterministic
+evidence in `evidence/matrix.yaml` and machine-verified on every push and pull
+request by `tools/verify_evidence_matrix.py` — fail-closed: CI refuses builds
+while any row is unverifiable. Run it locally with:
+
+```bash
+python3 tools/verify_evidence_matrix.py
+```
 
 ## License
 
