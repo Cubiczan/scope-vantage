@@ -1,0 +1,260 @@
+# Evidence matrix — scope-vantage (schema v1)
+#
+# Every capability claim stated in README.md and docs/ binds to deterministic
+# evidence: a test that exists in the tree, a repo-relative script that must
+# exit 0 (120s hard timeout, no network), a dotted manifest field equal to a
+# pinned value, or a sha256-pinned artifact. Verified on every PR and push by
+# tools/verify_evidence_matrix.py — fail-closed, no skip flags.
+schema_version: 1
+repo: scope-vantage
+claims:
+  - id: C001
+    claim: >-
+      Multi-source ingestion: UN Comtrade trade flows are fetched through the
+      comtradeapicall library via ComtradeService, with HS-code normalization
+      for the tracked critical minerals.
+    source: "README.md#key-features"
+    evidence:
+      - type: test
+        ref: "tests/test_services.py::TestComtradeService::test_critical_mineral_hs_codes"
+      - type: test
+        ref: "tests/test_services.py::TestComtradeService::test_normalize_hs"
+      - type: test
+        ref: "tests/test_services.py::TestComtradeService::test_fetch_no_library"
+  - id: C002
+    claim: >-
+      Commodity prices are ingested from AlphaVantage with automatic FRED
+      fallback via PricingService.
+    source: "README.md#overview"
+    evidence:
+      - type: test
+        ref: "tests/test_services.py::TestPricingService::test_get_commodity_price_av"
+      - type: test
+        ref: "tests/test_services.py::TestPricingService::test_get_commodity_price_fred_fallback"
+      - type: test
+        ref: "tests/test_services.py::TestPricingService::test_fred_with_key"
+  - id: C003
+    claim: >-
+      Apache Iceberg tables on S3 and the surrounding AWS analytics stack
+      (Glue catalog database and tables, Athena workgroup, two Lambda
+      functions, EventBridge schedules, and a Step Functions pipeline) are
+      provisioned in Terraform.
+    source: "README.md#architecture"
+    evidence:
+      - type: script
+        ref: "scripts/verify_infra.py"
+        timeout_seconds: 120
+  - id: C004
+    claim: >-
+      Supply chain graph mapping: nodes connect Origin, Processing,
+      Manufacturing, and End Market stages via SupplyChainService and the
+      SupplyChainNode model.
+    source: "README.md#key-features"
+    evidence:
+      - type: test
+        ref: "tests/test_services.py::TestSupplyChainService::test_build_chain"
+      - type: test
+        ref: "tests/test_services.py::TestSupplyChainService::test_add_node"
+      - type: test
+        ref: "tests/test_models.py::TestSupplyChainNode::test_add_connection"
+  - id: C005
+    claim: >-
+      Risk scoring engine: the composite score weights supply risk 0.30,
+      price volatility 0.25, logistics risk 0.25, and policy risk 0.20 as
+      declared in the Intelligence Scoring Formula.
+    source: "README.md#intelligence-scoring-formula"
+    evidence:
+      - type: test
+        ref: "tests/test_services.py::TestIntelligenceService::test_score_weights"
+      - type: test
+        ref: "tests/test_services.py::TestIntelligenceService::test_composite_score"
+  - id: C006
+    claim: >-
+      AI-powered analysis: Claude 3 Haiku generates narrative briefings
+      through the Amazon Bedrock Converse API via bedrock_client.BedrockClient
+      and IntelligenceService.generate_briefing.
+    source: "README.md#key-features"
+    evidence:
+      - type: test
+        ref: "tests/test_services.py::TestIntelligenceService::test_generate_briefing"
+      - type: script
+        ref: "scripts/verify_bedrock_client.py"
+        timeout_seconds: 120
+  - id: C007
+    claim: >-
+      Tariff impact modeling: TariffService quantifies tariff impact and runs
+      scenario analysis for new-tariff and tariff-removal policy changes.
+    source: "README.md#key-features"
+    evidence:
+      - type: test
+        ref: "tests/test_services.py::TestTariffService::test_scenario_new_tariff"
+      - type: test
+        ref: "tests/test_services.py::TestTariffService::test_scenario_removal"
+      - type: test
+        ref: "tests/test_services.py::TestTariffService::test_quantify_impact"
+  - id: C008
+    claim: >-
+      Concentration risk: Herfindahl-Hirschman Index (HHI) for geographic and
+      supplier analysis is computed by SupplyChainService.
+    source: "README.md#key-features"
+    evidence:
+      - type: test
+        ref: "tests/test_services.py::TestSupplyChainService::test_hhi_concentrated"
+      - type: test
+        ref: "tests/test_services.py::TestSupplyChainService::test_hhi_unconcentrated"
+  - id: C009
+    claim: >-
+      Procurement supplier HHI normalizes supplier spend into shares and
+      returns the standard HHI on a 0-10,000 scale, rejecting empty and
+      invalid inputs.
+    source: "docs/PROCUREMENT_RISK_ANALYTICS.md"
+    evidence:
+      - type: test
+        ref: "tests/test_procurement_risk.py::test_supplier_hhi_is_scale_independent"
+      - type: test
+        ref: "tests/test_procurement_risk.py::test_supplier_hhi_empty_and_invalid_inputs"
+  - id: C010
+    claim: >-
+      Price, freight, and policy risk scores combine movement and probability
+      components 60/40, cap each input at its ceiling, are deterministic, and
+      are bounded to 0-100.
+    source: "docs/PROCUREMENT_RISK_ANALYTICS.md"
+    evidence:
+      - type: test
+        ref: "tests/test_procurement_risk.py::test_risk_scores_are_deterministic_and_capped"
+  - id: C011
+    claim: >-
+      Risk-adjusted value pools: calculate_risk_adjusted_value_pool combines
+      supplier concentration with the three component scores using equal
+      default weights (custom complete weight mappings supported) and
+      validates scores and weights.
+    source: "docs/PROCUREMENT_RISK_ANALYTICS.md"
+    evidence:
+      - type: test
+        ref: "tests/test_procurement_risk.py::test_risk_adjusted_value_pool_uses_all_risk_components"
+      - type: test
+        ref: "tests/test_procurement_risk.py::test_risk_adjusted_value_pool_supports_custom_weights"
+      - type: test
+        ref: "tests/test_procurement_risk.py::test_risk_adjusted_value_pool_validates_scores_and_weights"
+  - id: C012
+    claim: >-
+      Athena views: pre-built analytical SQL views for critical-mineral trade
+      flows, tariff impact, and supply-chain risk ship in
+      src/aws/athena_views/.
+    source: "README.md#key-features"
+    evidence:
+      - type: script
+        ref: "scripts/verify_athena_views.py"
+        timeout_seconds: 120
+  - id: C013
+    claim: >-
+      Project structure: six domain models, five services, three Glue ETL
+      scripts, three Athena SQL views, two Lambda handlers, plus the root
+      bedrock_client.py and requirements.txt.
+    source: "README.md#project-structure"
+    evidence:
+      - type: script
+        ref: "scripts/verify_project_structure.py"
+        timeout_seconds: 120
+  - id: C014
+    claim: >-
+      Test suite: the tests/ directory carries 50 or more pytest test
+      functions (101 collected at matrix authoring time).
+    source: "README.md#project-structure"
+    evidence:
+      - type: script
+        ref: "scripts/verify_test_inventory.py"
+        timeout_seconds: 120
+  - id: C015
+    claim: >-
+      Tracked commodities: the five critical-mineral HS codes listed in the
+      README table (2836.90, 8105.20, 7504.00, 7403.11, 2846.90) are tracked
+      in both the service HS-code map and the Commodity model registry.
+    source: "README.md#tracked-commodities-critical-minerals"
+    evidence:
+      - type: test
+        ref: "tests/test_services.py::TestComtradeService::test_critical_mineral_hs_codes"
+      - type: test
+        ref: "tests/test_models.py::TestCommodity::test_critical_minerals_list"
+      - type: script
+        ref: "scripts/verify_tracked_commodities.py"
+        timeout_seconds: 120
+  - id: C016
+    claim: >-
+      Domain models provide JSON serialization round-trips (to_dict /
+      from_dict) as exercised for TradeFlow, Commodity, and
+      IntelligenceBriefing.
+    source: "README.md#project-structure"
+    evidence:
+      - type: test
+        ref: "tests/test_models.py::TestTradeFlow::test_serialization"
+      - type: test
+        ref: "tests/test_models.py::TestCommodity::test_deserialization"
+      - type: test
+        ref: "tests/test_models.py::TestIntelligenceBriefing::test_serialization"
+  - id: C017
+    claim: >-
+      The PolarsDataProcessor operations referenced by the Great Expectations
+      integration doc (filter_by_commodity, filter_by_country,
+      filter_by_date_range, aggregate_by_region, compute_volatility,
+      hhi_index) are implemented in src/polars_utils.py.
+    source: "docs/GREAT_EXPECTATIONS_INTEGRATION.md"
+    evidence:
+      - type: script
+        ref: "scripts/verify_polars_processor.py"
+        timeout_seconds: 120
+  - id: C018
+    claim: >-
+      CHP R0 gate: all four decision checks (Solvable, Scoped, Valid,
+      Worth_it) are enabled in the repository's R0 configuration.
+    source: "README.md#chp-governance"
+    evidence:
+      - type: manifest_field
+        ref: ".chp/R0_CONFIG.yaml:r0_gate.solvable"
+        equals: true
+      - type: manifest_field
+        ref: ".chp/R0_CONFIG.yaml:r0_gate.scoped"
+        equals: true
+      - type: manifest_field
+        ref: ".chp/R0_CONFIG.yaml:r0_gate.valid"
+        equals: true
+      - type: manifest_field
+        ref: ".chp/R0_CONFIG.yaml:r0_gate.worth_it"
+        equals: true
+  - id: C019
+    claim: >-
+      CHP domain configuration: foundation threshold is calibrated to 75.
+    source: "README.md#chp-governance"
+    evidence:
+      - type: manifest_field
+        ref: ".chp/R0_CONFIG.yaml:foundation.pass_threshold"
+        equals: 75
+  - id: C020
+    claim: >-
+      CHP adversarial layer: devil's advocate is mandatory at Phase 0 and
+      Round 3.
+    source: "README.md#chp-governance"
+    evidence:
+      - type: manifest_field
+        ref: ".chp/R0_CONFIG.yaml:adversary.phase0_mandatory"
+        equals: true
+      - type: manifest_field
+        ref: ".chp/R0_CONFIG.yaml:adversary.round3_mandatory"
+        equals: true
+  - id: C021
+    claim: >-
+      CHP domain configuration: the CFO accuracy guard is disabled.
+    source: "README.md#chp-governance"
+    evidence:
+      - type: manifest_field
+        ref: ".chp/R0_CONFIG.yaml:cfo_accuracy.enabled"
+        equals: false
+  - id: C022
+    claim: >-
+      CHP compliance artifacts are present in .chp/: STATE_MACHINE.md,
+      R0_CONFIG.yaml, ADVERSARIAL_PROMPTS.md, and CHP_COMPLIANCE.md.
+    source: "README.md#chp-governance"
+    evidence:
+      - type: script
+        ref: "scripts/verify_chp_artifacts.py"
+        timeout_seconds: 120
