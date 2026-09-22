@@ -1,12 +1,12 @@
 """Quantitative analytics for Scope.Vantage (pricing, procurement & risk)."""
-from src.analytics.procurement_risk import (
+from .procurement_risk import (
     calculate_risk_adjusted_value_pool,
     calculate_supplier_hhi,
     score_freight_risk,
     score_policy_risk,
     score_price_risk,
 )
-from src.analytics.pricing_risk import (
+from .pricing_risk import (
     black_scholes_price,
     breach_probability,
     calculate_commodity_price,
