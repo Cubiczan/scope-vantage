@@ -228,7 +228,7 @@ claims:
     evidence:
       - type: manifest_field
         ref: ".chp/R0_CONFIG.yaml:foundation.pass_threshold"
-        equals: 75
+        equals: 76
   - id: C020
     claim: >-
       CHP adversarial layer: devil's advocate is mandatory at Phase 0 and
