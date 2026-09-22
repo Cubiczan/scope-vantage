@@ -74,7 +74,7 @@ The Glue ETL scripts, Step Functions orchestrator, Athena views, and Bedrock AI 
    ```bash
    uv add airbyte-agent-sdk
    ```
-3. **Add to `.env.example`**:
+3. **Add to your `.env`**:
    ```
    AIRBYTE_CLIENT_ID=your_client_id
    AIRBYTE_CLIENT_SECRET=***   ```

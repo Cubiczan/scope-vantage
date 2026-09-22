@@ -4,7 +4,13 @@
 
 [Great Expectations](https://greatexpectations.io/) (12K+ GitHub stars) is a Python-based data quality framework that validates, profiles, and documents data. It defines "expectations" about your data — assertions on columns, rows, or entire tables — and surfaces quality issues before they enter your analytics pipeline.
 
-This integration adds expectation suites to Scope Vantage's supply chain intelligence platform, validating trade data, commodity prices, and logistics events at the ingestion boundary. Combined with the `PolarsDataProcessor`, it ensures that every dataset feeding risk scoring, tariff analysis, and AI briefings meets quality standards.
+This document specifies an integration that adds expectation suites to Scope
+Vantage's supply chain intelligence platform, validating trade data, commodity
+prices, and logistics events at the ingestion boundary. Combined with the
+`PolarsDataProcessor`, it would ensure that every dataset feeding risk scoring,
+tariff analysis, and AI briefings meets quality standards. The integration is
+not yet installed: `great_expectations` is not in `requirements.txt` and no GX
+configuration ships in the tree.
 
 ---
 
@@ -29,7 +35,6 @@ Scope Vantage ingests data from UN Comtrade, AlphaVantage, and FRED into Iceberg
 
 ```bash
 pip install great_expectations
-# Already in requirements.txt for scope-vantage
 ```
 
 ### 2. Initialize GX
@@ -432,7 +437,7 @@ stores:
 ### Option 1: In Lambda Ingestion
 
 ```python
-# src/lambda/ingestion_handler.py
+# src/lambda/comtrade_ingestion_handler.py
 import great_expectations as gx
 
 def lambda_handler(event, context):
@@ -499,8 +504,8 @@ def validate_trade_flows(input_path: str, output_path: str):
 # Run validation as a scheduled task
 great_expectations checkpoint run trade_data_validation
 
-# Or validate all suites
-python scripts/run_gx_validation.py
+# Or run all suites from a validation entrypoint
+# (to be added together with this integration)
 ```
 
 ---
@@ -534,7 +539,7 @@ steps:
     run: fetch_from_comtrade()
 
   - name: Validate data
-    run: python scripts/run_gx_validation.py
+    run: python -m great_expectations checkpoint run trade_data_validation
     description: "Run GX expectation suites before Iceberg write"
 
   - name: Write to Iceberg
