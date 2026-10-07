@@ -527,7 +527,7 @@ PolarsDataProcessor (filter, aggregate, volatility analysis)
     ↓
 Risk Scoring Engine (composite score, HHI index)
     ↓
-Intelligence Briefings (Claude 3 Haiku via Bedrock)
+Intelligence Briefings (Amazon Nova Lite via Bedrock)
 ```
 
 ### Pipeline Integration Pattern

@@ -70,13 +70,18 @@ claims:
         ref: "tests/test_services.py::TestIntelligenceService::test_composite_score"
   - id: C006
     claim: >-
-      AI-powered analysis: Claude 3 Haiku generates narrative briefings
-      through the Amazon Bedrock Converse API via bedrock_client.BedrockClient
-      and IntelligenceService.generate_briefing.
+      AI-powered analysis: Amazon Nova Lite (us.amazon.nova-lite-v1:0)
+      generates narrative briefings through the Amazon Bedrock Converse API
+      via bedrock_client.BedrockClient and IntelligenceService.generate_briefing.
+      Anthropic Claude model overrides are rejected.
     source: "README.md#key-features"
     evidence:
       - type: test
         ref: "tests/test_services.py::TestIntelligenceService::test_generate_briefing"
+      - type: test
+        ref: "tests/test_bedrock_client.py::test_default_constants"
+      - type: test
+        ref: "tests/test_bedrock_client.py::test_rejects_anthropic_model_ids"
       - type: script
         ref: "scripts/verify_bedrock_client.py"
         timeout_seconds: 120

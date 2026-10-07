@@ -441,6 +441,10 @@ resource "aws_iam_role_policy" "lambda" {
   name = "${var.project_name}-lambda-policy"
   role = aws_iam_role.lambda.id
 
+  # Bedrock is scoped to Amazon Nova. Converse is authorized as both
+  # bedrock:Converse and bedrock:InvokeModel, and a cross-region inference
+  # profile (us.amazon.nova-*) also requires the underlying foundation-model
+  # ARN. Anthropic Claude is omitted: it is an AWS Marketplace product.
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -450,11 +454,24 @@ resource "aws_iam_role_policy" "lambda" {
           "s3:GetObject", "s3:PutObject", "s3:ListBucket",
           "athena:StartQueryExecution", "athena:GetQueryExecution", "athena:GetQueryResults",
           "glue:*",
-          "bedrock:Converse",
           "logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents",
         ]
         Resource = "*"
-      }
+      },
+      {
+        Sid    = "AllowAmazonNovaConverse"
+        Effect = "Allow"
+        Action = [
+          "bedrock:Converse",
+          "bedrock:ConverseStream",
+          "bedrock:InvokeModel",
+          "bedrock:InvokeModelWithResponseStream",
+        ]
+        Resource = [
+          "arn:aws:bedrock:*::foundation-model/amazon.nova-*",
+          "arn:aws:bedrock:*:*:inference-profile/us.amazon.nova-*",
+        ]
+      },
     ]
   })
 }
