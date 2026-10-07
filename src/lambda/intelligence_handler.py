@@ -14,6 +14,8 @@ from datetime import datetime
 
 import boto3
 
+from bedrock_client import DEFAULT_REGION, resolve_model_id
+
 logger = logging.getLogger(__name__)
 
 SCORE_WEIGHTS = {"supply_risk": 0.30, "price_volatility": 0.25, "logistics_risk": 0.25, "policy_risk": 0.20}
@@ -92,9 +94,17 @@ def compute_composite_scores(event):
 
 
 def invoke_bedrock_analysis(commodity: str, score_data: dict) -> str:
-    """Invoke Bedrock Converse API for supply chain intelligence analysis."""
-    bedrock = boto3.client("bedrock-runtime", region_name=os.environ.get("AWS_REGION", "us-east-1"))
-    model_id = os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0")
+    """Invoke Amazon Nova on the Bedrock Converse API for supply chain analysis.
+
+    ``BEDROCK_MODEL_ID`` overrides the Nova Lite default. Anthropic Claude
+    ids (``anthropic.*`` and cross-region ``*.anthropic.*`` profiles) raise
+    before any Bedrock call.
+    """
+    model_id = resolve_model_id()
+    bedrock = boto3.client(
+        "bedrock-runtime",
+        region_name=os.environ.get("AWS_REGION", DEFAULT_REGION),
+    )
 
     prompt = f"""Analyze the supply chain intelligence for {commodity}:
 

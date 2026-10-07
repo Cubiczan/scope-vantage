@@ -6,7 +6,7 @@
 
 ## Overview
 
-**Scope.Vantage** is a comprehensive supply chain intelligence platform built on AWS native services. It ingests global trade data from UN Comtrade, commodity prices from AlphaVantage and FRED, and uses Amazon Bedrock (Claude Haiku) to generate actionable intelligence briefings about supply chain risks, tariff impacts, and strategic opportunities.
+**Scope.Vantage** is a comprehensive supply chain intelligence platform built on AWS native services. It ingests global trade data from UN Comtrade, commodity prices from AlphaVantage and FRED, and uses Amazon Bedrock (Amazon Nova Lite) to generate actionable intelligence briefings about supply chain risks, tariff impacts, and strategic opportunities.
 
 ## Architecture
 
@@ -80,7 +80,7 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │               INTELLIGENCE LAYER (BEDROCK AI)                    │
 │  ┌────────────────────────────────────────────────────────────┐ │
-│  │  Claude 3 Haiku via Converse API                           │ │
+│  │  Amazon Nova Lite via Converse API                         │ │
 │  │  - Composite Intelligence Scoring                          │ │
 │  │  - Narrative Risk Analysis                                 │ │
 │  │  - Strategic Recommendations                               │ │
@@ -95,7 +95,7 @@
 - **Apache Iceberg Tables**: ACID-compliant table format on S3 with time-travel queries
 - **Supply Chain Graph Mapping**: Origin → Processing → Manufacturing → End Market
 - **Risk Scoring Engine**: Composite score (Supply 30% + Price Volatility 25% + Logistics 25% + Policy 20%)
-- **AI-Powered Analysis**: Claude 3 Haiku generates narrative briefings via Bedrock Converse API
+- **AI-Powered Analysis**: Amazon Nova Lite (`us.amazon.nova-lite-v1:0`) generates narrative briefings via the Bedrock Converse API in us-east-1. Anthropic Claude model IDs are rejected.
 - **Tariff Impact Modeling**: Scenario analysis for trade policy changes
 - **Concentration Risk**: Herfindahl-Hirschman Index (HHI) for geographic/supplier analysis
 - **Procurement Value Pools**: Deterministic supplier HHI, price/freight/policy risk scores, and risk-adjusted value pools (`docs/PROCUREMENT_RISK_ANALYTICS.md`)
@@ -104,7 +104,7 @@
 ## Prerequisites
 
 - Python 3.10+
-- AWS account with Bedrock access enabled
+- AWS account with Amazon Bedrock access to Amazon Nova Lite (`us.amazon.nova-lite-v1:0`) in us-east-1
 - AWS credentials configured (via `.env` or IAM)
 - Terraform 1.5+ (for infrastructure deployment)
 
@@ -119,8 +119,9 @@ pip install -r requirements.txt
 ### 2. Configure Environment
 
 ```bash
-# Create a .env with your AWS credentials and API keys
-# (e.g., FRED_API_KEY, an AlphaVantage key, and a Comtrade subscription key)
+cp .env.example .env
+# Fill in API keys. BEDROCK_MODEL_ID defaults to Amazon Nova Lite.
+# Anthropic Claude model IDs (anthropic.*) are rejected.
 ```
 
 ### 3. Deploy Infrastructure
@@ -236,16 +237,16 @@ Composite Score = (
 
 ## AWS Cost Estimates (Monthly)
 
-| Service         | Usage                          | Est. Cost   |
-|-----------------|--------------------------------|-------------|
-| S3 Storage      | 50 GB Iceberg tables           | ~$1.20      |
-| Athena Queries  | 100 queries/month              | ~$5.00      |
-| Lambda          | 10K invocations                | ~$0.50      |
-| Step Functions  | 500 state transitions          | ~$0.75      |
-| Glue ETL        | 3 jobs × 10 min                | ~$1.50      |
-| Bedrock (Haiku) | 100K tokens/month              | ~$0.25      |
-| EventBridge     | 30 scheduled rules             | ~$0.30      |
-| **Total**       |                                | **~$9.50**  |
+| Service             | Usage                          | Est. Cost   |
+|---------------------|--------------------------------|-------------|
+| S3 Storage          | 50 GB Iceberg tables           | ~$1.20      |
+| Athena Queries      | 100 queries/month              | ~$5.00      |
+| Lambda              | 10K invocations                | ~$0.50      |
+| Step Functions      | 500 state transitions          | ~$0.75      |
+| Glue ETL            | 3 jobs × 10 min                | ~$1.50      |
+| Bedrock (Nova Lite) | 100K tokens/month              | ~$0.02      |
+| EventBridge         | 30 scheduled rules             | ~$0.30      |
+| **Total**           |                                | **~$9.27**  |
 
 ## Evidence Matrix
 

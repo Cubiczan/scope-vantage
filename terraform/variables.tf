@@ -25,9 +25,14 @@ variable "glue_database" {
 }
 
 variable "bedrock_model_id" {
-  description = "Amazon Bedrock model ID for Converse API"
+  description = "Amazon Bedrock Converse API model ID. Defaults to the Amazon Nova Lite cross-region inference profile (us-east-1). Anthropic Claude IDs are rejected: Claude on Bedrock is an AWS Marketplace product and is not covered by promo credits."
   type        = string
-  default     = "anthropic.claude-3-haiku-20240307-v1:0"
+  default     = "us.amazon.nova-lite-v1:0"
+
+  validation {
+    condition     = !strcontains(lower(var.bedrock_model_id), "anthropic.")
+    error_message = "Anthropic Claude models are not allowed. Claude on Amazon Bedrock is billed through AWS Marketplace and is IAM-denied on this account. Use an Amazon Nova model such as us.amazon.nova-lite-v1:0."
+  }
 }
 
 variable "un_comtrade_key" {
